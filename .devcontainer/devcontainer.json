@@ -1,0 +1,17 @@
+{
+  "image": "ghcr.io/mrsimonemms/devcontainers/full",
+  "name": "devcontainer",
+  "features": {
+    "ghcr.io/devcontainers-extra/features/temporal-cli:1": {}
+  },
+  "containerEnv": {
+    "GIT_REPO": "github.com/mrsimonemms/temporal-demos",
+    "TEMPORAL_ADDRESS": "localhost:7233"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [],
+      "settings": {}
+    }
+  }
+}
