@@ -20,7 +20,6 @@ import (
 	"context"
 	"log"
 	"os"
-	"time"
 
 	schedulepayments "github.com/mrsimonemms/temporal-demos/schedule-payments"
 	"go.temporal.io/sdk/client"
@@ -40,14 +39,9 @@ func main() {
 		TaskQueue: "payments",
 	}
 
-	// Get payments due today
-	year, month, day := time.Now().Date()
-	startTime := time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
-	endTime := startTime.Add(time.Hour * 24)
-
 	ctx := context.Background()
 
-	we, err := c.ExecuteWorkflow(ctx, workflowOptions, schedulepayments.FindDuePaymentsWorkflow, startTime, endTime)
+	we, err := c.ExecuteWorkflow(ctx, workflowOptions, schedulepayments.FindDuePaymentsWorkflow)
 	if err != nil {
 		log.Fatalln("Unable to execute workflow", err)
 	}
