@@ -6,6 +6,15 @@
   "yaml.schemas": {
     "https://json.schemastore.org/github-workflow.json": [
       ".github/workflows/*.{yml,yaml}"
+    ],
+    "https://serverlessworkflow.io/schemas/1.0.0/workflow.json": [
+      "serverlessworkflow/*.{yml,yaml}"
     ]
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   }
 }
