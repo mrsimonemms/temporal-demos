@@ -8,7 +8,7 @@
       ".github/workflows/*.{yml,yaml}"
     ],
     "https://serverlessworkflow.io/schemas/1.0.0/workflow.json": [
-      "serverlessworkflow/*.{yml,yaml}"
+      "serverless-workflow/*.{yml,yaml}"
     ]
   },
   "[javascript]": {
