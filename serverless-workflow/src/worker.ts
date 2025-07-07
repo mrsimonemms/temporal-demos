@@ -14,4 +14,41 @@
  * limitations under the License.
  */
 
-console.log('worker');
+import { NativeConnection, Worker } from '@temporalio/worker';
+import { ServerlessWorkflow } from './serverless-workflow';
+
+async function run() {
+  // Load the workflow YAML, convert, validate and generate the workflow
+  const wf = await ServerlessWorkflow.load('./workflow.yaml');
+
+  console.log(await wf.generateTemporalWorkflow());
+
+  process.exit(1);
+
+  const connection = await NativeConnection.connect({
+    address: process.env.TEMPORAL_ADDRESS,
+  });
+
+  try {
+    const worker = await Worker.create({
+      connection,
+      // workflowsPath: require.resolve('./workflows'),
+      // workflowBundle: {
+      //   code: '',
+      // },
+      // activities,
+      taskQueue: 'serverless-workflow',
+    });
+
+    // Start accepting tasks on the queue
+    await worker.run();
+  } finally {
+    // Close the connection once the worker has stopped
+    await connection.close();
+  }
+}
+
+run().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
