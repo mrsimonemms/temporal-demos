@@ -14,4 +14,30 @@
  * limitations under the License.
  */
 
-console.log('client');
+import { Client, Connection } from '@temporalio/client';
+import { nanoid } from 'nanoid';
+
+async function run() {
+  const connection = await Connection.connect({
+    address: process.env.TEMPORAL_ADDRESS,
+  });
+
+  const client = new Client({
+    connection,
+  });
+
+  const handle = await client.workflow.start('example', {
+    taskQueue: 'serverless-workflow',
+    args: ['Temporal'],
+    workflowId: 'workflow-' + nanoid(),
+  });
+  console.log(`Started workflow ${handle.workflowId}`);
+
+  // Wait for the result
+  console.log(await handle.result());
+}
+
+run().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

@@ -1,8 +1,0 @@
-document:
-  dsl: 1.0.0
-  namespace: example
-  name: serverlessworkflow
-  version: 0.0.1
-  title: Serverless Workflow
-  summary: An example of how to use Serverless Workflow to define Temporal Workflows
-do: []

@@ -1,0 +1,19 @@
+import { proxyActivities } from '@temporalio/workflow';
+import type * as activities from './activities';
+import { WorkflowVariables } from './types';
+
+const { callHttp } = proxyActivities<typeof activities>({
+  startToCloseTimeout: '1 minute',
+});
+
+export async function {{ workflow.document.name }}(
+  // Put the inputs in here
+) {
+  const vars: WorkflowVariables = {};
+
+  {{#each tasks}}
+    {{#with this}}
+    {{ name }}
+    {{/with}}
+  {{/each}}
+}
