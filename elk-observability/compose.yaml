@@ -2,6 +2,29 @@ include:
   - ../temporal-compose.yaml
 
 services:
+  starter:
+    extends: worker
+    working_dir: /go/root/app/starter
+    command: go run .
+
+  worker:
+    build:
+      context: app
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+    volumes:
+      - ./app:/go/root/app
+    working_dir: /go/root/app/worker
+    links:
+      - temporal
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      kibana:
+        condition: service_healthy
+      temporal-ui:
+        condition: service_started
+
   kibana:
     image: kibana:${ELK_VERSION:-9.0.3}
     ports:
