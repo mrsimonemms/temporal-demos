@@ -1,0 +1,19 @@
+include:
+  - ../temporal-compose.yaml
+
+services:
+  kibana:
+    image: kibana:${ELK_VERSION:-9.0.3}
+    ports:
+      - 5601:5601
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      SERVERNAME: kibana
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:5601"]
+      interval: 10s
+      timeout: 10s
+      retries: 120
