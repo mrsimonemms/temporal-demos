@@ -1,0 +1,110 @@
+include:
+  - ../temporal-compose.yaml
+
+services:
+  starter:
+    extends: worker
+    working_dir: /go/root/app/starter
+    command: go run .
+
+  worker:
+    build:
+      context: app
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+    volumes:
+      - ./app:/go/root/app
+    working_dir: /go/root/app/worker
+    links:
+      - temporal
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      elk-setup:
+        condition: service_completed_successfully
+      kibana:
+        condition: service_healthy
+      temporal-ui:
+        condition: service_started
+
+  #############
+  # ELK Stack #
+  #############
+  elk-setup:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.0.3
+    environment:
+      ELASTIC_HOST: https://elasticsearch:9200
+      ELASTIC_PASSWORD: password
+      KIBANA_PASSWORD: password
+    volumes:
+      - certs:/usr/share/elasticsearch/config/certs
+      - ./dev/elastic-instances.yaml:/usr/share/elasticsearch/config/instances.yaml
+      - ./dev/elastic-setup.sh:/setup.sh
+    user: "0"
+    command: /setup.sh
+    healthcheck:
+      test: ["CMD-SHELL", "[ -f config/certs/elasticsearch/elasticsearch.crt ]"]
+      interval: 1s
+      timeout: 5s
+      retries: 120
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.0.3
+    volumes:
+      - certs:/usr/share/elasticsearch/config/certs
+    environment:
+      node.name: elasticsearch
+      ELASTIC_PASSWORD: password
+      bootstrap.memory_lock: false
+      cluster.initial_master_nodes: elasticsearch
+      xpack.security.enabled: true
+      xpack.security.http.ssl.enabled: true
+      xpack.security.http.ssl.key: certs/elasticsearch/elasticsearch.key
+      xpack.security.http.ssl.certificate: certs/elasticsearch/elasticsearch.crt
+      xpack.security.http.ssl.certificate_authorities: certs/ca/ca.crt
+      xpack.security.transport.ssl.enabled: true
+      xpack.security.transport.ssl.key: certs/elasticsearch/elasticsearch.key
+      xpack.security.transport.ssl.certificate: certs/elasticsearch/elasticsearch.crt
+      xpack.security.transport.ssl.certificate_authorities: certs/ca/ca.crt
+      xpack.security.transport.ssl.verification_mode: certificate
+      xpack.license.self_generated.type: basic
+      xpack.ml.use_auto_machine_memory_percent: true
+    mem_limit: 1gb
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s --cacert config/certs/ca/ca.crt https://localhost:9200 | grep -q 'missing authentication credentials'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:9.0.3
+    ports:
+      - 5601:5601
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    volumes:
+      - certs:/usr/share/kibana/config/certs
+    environment:
+      SERVERNAME: kibana
+      ELASTICSEARCH_HOSTS: https://elasticsearch:9200
+      ELASTICSEARCH_USERNAME: kibana_system
+      ELASTICSEARCH_PASSWORD: password
+      ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES: config/certs/ca/ca.crt
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s -I http://localhost:5601 | grep -q 'HTTP/1.1 302 Found'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+
+volumes:
+  certs:
+    driver: local
