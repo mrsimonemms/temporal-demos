@@ -13,5 +13,9 @@
       "extensions": [],
       "settings": {}
     }
-  }
+  },
+  "forwardPorts": [
+    7233,
+    8233
+  ]
 }
