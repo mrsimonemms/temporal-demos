@@ -21,3 +21,18 @@ services:
       interval: 10s
       timeout: 10s
       retries: 120
+
+  logstash:
+    image: logstash:${LOGSTASH_VERSION:-7.17.28}
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      kibana:
+        condition: service_healthy
+    environment:
+      xpack.monitoring.enabled: false
+      discovery.seed_hosts: logstash
+      LS_JAVA_OPTS: "-Xms512m -Xmx512m"
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    ports:
+      - 5044:5044
