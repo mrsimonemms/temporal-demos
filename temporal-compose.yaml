@@ -11,7 +11,7 @@
 
 services:
   elasticsearch:
-    image: elasticsearch:${ELASTICSEARCH_VERSION:-7.17.28}
+    image: elasticsearch:${ELK_VERSION:-7.17.28}
     environment:
       cluster.routing.allocation.disk.threshold_enabled: true
       cluster.routing.allocation.disk.watermark.low: 512mb

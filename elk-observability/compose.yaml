@@ -26,7 +26,7 @@ services:
         condition: service_started
 
   kibana:
-    image: kibana:${KIBANA_VERSION:-7.17.28}
+    image: kibana:${ELK_VERSION:-7.17.28}
     ports:
       - 5601:5601
     depends_on:
@@ -46,16 +46,29 @@ services:
       retries: 120
 
   logstash:
-    image: logstash:${LOGSTASH_VERSION:-7.17.28}
+    image: logstash:${ELK_VERSION:-7.17.28}
     depends_on:
       elasticsearch:
         condition: service_healthy
       kibana:
         condition: service_healthy
     environment:
-      xpack.monitoring.enabled: false
       discovery.seed_hosts: logstash
-      LS_JAVA_OPTS: "-Xms512m -Xmx512m"
+      node.name: logstash
+      pipeline.ecs_compatibility: disabled
+      xpack.monitoring.enabled: false
+      LS_JAVA_OPTS: -Xms256m -Xmx256m
       ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    volumes:
+      - logstashdata:/usr/share/logstash/data
+      - ./dev/logstash/pipeline.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+      - ./logstash_ingest_data/:/usr/share/logstash/ingest_data
     ports:
       - 5044:5044
+      - 50000:50000/tcp
+      - 50000:50000/udp
+      - 9600:9600
+
+volumes:
+  logstashdata:
+    driver: local
