@@ -16,26 +16,20 @@
 
 package foodordering
 
-import (
-	"context"
-	"time"
-
-	"go.temporal.io/sdk/activity"
-)
-
-type activities struct{}
-
-func (a *activities) DoSomething(ctx context.Context) error {
-	logger := activity.GetLogger(ctx)
-	logger.Info("Activity started")
-
-	time.Sleep(time.Second * 5)
-
-	logger.Info("Activity finished")
-
-	return nil
+var SignalChannels = struct {
+	ADD_ITEM              string // Adds an item to the order
+	CHECKOUT_CHANNEL      string // Submits order for payment
+	REMOVE_ITEM           string // Remove an item from the order
+	UPDATE_STATUS_CHANNEL string // Restaurant updates status of order
+}{
+	ADD_ITEM:              "ADD_ITEM",
+	CHECKOUT_CHANNEL:      "CHECKOUT_CHANNEL",
+	REMOVE_ITEM:           "REMOVE_ITEM",
+	UPDATE_STATUS_CHANNEL: "UPDATE_STATUS_CHANNEL",
 }
 
-func NewActivities() (*activities, error) {
-	return &activities{}, nil
+var QueryTypes = struct {
+	GET_STATUS string
+}{
+	GET_STATUS: "GET_STATUS",
 }

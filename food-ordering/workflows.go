@@ -15,3 +15,53 @@
  */
 
 package foodordering
+
+import (
+	"time"
+
+	"go.temporal.io/sdk/workflow"
+)
+
+func OrderWorkflow(ctx workflow.Context, state OrderState) error {
+	logger := workflow.GetLogger(ctx)
+
+	err := workflow.SetQueryHandler(ctx, QueryTypes.GET_STATUS, func(input []byte) (OrderState, error) {
+		return state, nil
+	})
+	if err != nil {
+		logger.Info("SetQueryHandler failed.", "Error", err)
+		return err
+	}
+
+	checkoutChannel := workflow.GetSignalChannel(ctx, SignalChannels.CHECKOUT_CHANNEL)
+
+	var a *activities
+
+	for {
+		selector := workflow.NewSelector(ctx)
+
+		selector.AddReceive(checkoutChannel, func(c workflow.ReceiveChannel, _ bool) {
+			logger.Info("Checkout triggered")
+
+			// Change state
+			state.Status = OrderStatusPending
+
+			ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+				StartToCloseTimeout: time.Minute,
+			})
+
+			if err := workflow.ExecuteActivity(ctx, a.DoSomething).Get(ctx, nil); err != nil {
+				logger.Error("Error checking out", "error", err)
+				return
+			}
+		})
+
+		selector.Select(ctx)
+
+		if state.Status == OrderStatusPending {
+			break
+		}
+	}
+
+	return nil
+}

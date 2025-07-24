@@ -35,7 +35,9 @@ func main() {
 	}
 	defer c.Close()
 
-	w := worker.New(c, "order-food", worker.Options{})
+	w := worker.New(c, foodordering.OrderFoodTaskQueue, worker.Options{})
+
+	w.RegisterWorkflow(foodordering.OrderWorkflow)
 
 	activities, err := foodordering.NewActivities()
 	if err != nil {
