@@ -16,26 +16,18 @@
 
 package foodordering
 
-import (
-	"context"
-	"time"
-
-	"go.temporal.io/sdk/activity"
-)
-
-type activities struct{}
-
-func (a *activities) DoSomething(ctx context.Context) error {
-	logger := activity.GetLogger(ctx)
-	logger.Info("Activity started")
-
-	time.Sleep(time.Second * 5)
-
-	logger.Info("Activity finished")
-
-	return nil
-}
-
-func NewActivities() (*activities, error) {
-	return &activities{}, nil
+// List of available products - normally would be in a database
+var allProducts = []Product{
+	{
+		ProductID: 1,
+		Name:      "Fish and chips",
+	},
+	{
+		ProductID: 2,
+		Name:      "Burger and chips",
+	},
+	{
+		ProductID: 3,
+		Name:      "Pizza",
+	},
 }
