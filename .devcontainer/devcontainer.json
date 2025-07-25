@@ -10,12 +10,17 @@
   },
   "customizations": {
     "vscode": {
-      "extensions": [],
+      "extensions": [
+        "tamasfe.even-better-toml"
+      ],
       "settings": {}
     }
   },
   "forwardPorts": [
     7233,
     8233
-  ]
+  ],
+  "postCreateCommand": {
+    "install-air": "go install github.com/air-verse/air@latest"
+  }
 }
