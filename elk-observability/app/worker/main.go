@@ -18,17 +18,14 @@ package main
 
 import (
 	"log"
-	"os"
 	"time"
 
 	elk_observability "github.com/mrsimonemms/temporal-demos/elk-observability"
+	"github.com/mrsimonemms/temporal-demos/elk-observability/lib/temporal"
 	prom "github.com/prometheus/client_golang/prometheus"
 	"github.com/uber-go/tally/v4"
 	"github.com/uber-go/tally/v4/prometheus"
-	"go.temporal.io/sdk/client"
-	"go.temporal.io/sdk/contrib/opentelemetry"
 	sdktally "go.temporal.io/sdk/contrib/tally"
-	sdkinterceptor "go.temporal.io/sdk/interceptor"
 	"go.temporal.io/sdk/worker"
 )
 
@@ -59,21 +56,26 @@ func newPrometheusScope(c prometheus.Configuration) tally.Scope {
 
 func main() {
 	// create Interceptor
-	log.Println("Create OpenTelemetry interceptor")
-	tracingInterceptor, err := opentelemetry.NewTracingInterceptor(opentelemetry.TracerOptions{})
-	if err != nil {
-		log.Fatalln("Unable to create OpenTelemetry interceptor")
-	}
+	// log.Println("Create OpenTelemetry interceptor")
+	// tracingInterceptor, err := opentelemetry.NewTracingInterceptor(opentelemetry.TracerOptions{})
+	// if err != nil {
+	// 	log.Fatalln("Unable to create OpenTelemetry interceptor")
+	// }
 
 	// The client and worker are heavyweight objects that should be created once per process.
-	c, err := client.Dial(client.Options{
-		HostPort:     os.Getenv("TEMPORAL_ADDRESS"),
-		Interceptors: []sdkinterceptor.ClientInterceptor{tracingInterceptor},
-		MetricsHandler: sdktally.NewMetricsHandler(newPrometheusScope(prometheus.Configuration{
-			ListenAddress: "0.0.0.0:9090",
-			TimerType:     "histogram",
-		})),
-	})
+	// c, err := client.Dial(client.Options{
+	// 	HostPort:     os.Getenv("TEMPORAL_ADDRESS"),
+	// 	Interceptors: []sdkinterceptor.ClientInterceptor{tracingInterceptor},
+	// 	MetricsHandler: sdktally.NewMetricsHandler(newPrometheusScope(prometheus.Configuration{
+	// 		ListenAddress: "0.0.0.0:9090",
+	// 		TimerType:     "histogram",
+	// 	})),
+	// })
+	c, err := temporal.NewClient()
+	if err != nil {
+		log.Fatalln("Unable to create client", err)
+	}
+	defer c.Close()
 	if err != nil {
 		log.Fatalln("Unable to create client", err)
 	}

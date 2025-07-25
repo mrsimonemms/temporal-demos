@@ -19,17 +19,15 @@ package main
 import (
 	"context"
 	"log"
-	"os"
 
 	elk_observability "github.com/mrsimonemms/temporal-demos/elk-observability"
+	"github.com/mrsimonemms/temporal-demos/elk-observability/lib/temporal"
 	"go.temporal.io/sdk/client"
 )
 
 func main() {
 	// The client is a heavyweight object that should be created once per process.
-	c, err := client.Dial(client.Options{
-		HostPort: os.Getenv("TEMPORAL_ADDRESS"),
-	})
+	c, err := temporal.NewClient()
 	if err != nil {
 		log.Fatalln("Unable to create client", err)
 	}
