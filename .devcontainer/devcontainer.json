@@ -6,17 +6,21 @@
   },
   "containerEnv": {
     "GIT_REPO": "github.com/mrsimonemms/temporal-demos",
-    "TEMPORAL_ADDRESS": "localhost:7233"
+    "TEMPORAL_ADDRESS": "localhost:7233",
+    "VITE_HOST": "0.0.0.0"
   },
   "customizations": {
     "vscode": {
       "extensions": [
-        "tamasfe.even-better-toml"
+        "tamasfe.even-better-toml",
+        "esbenp.prettier-vscode",
+        "svelte.svelte-vscode"
       ],
       "settings": {}
     }
   },
   "forwardPorts": [
+    5173,
     5601,
     7233,
     7234,
