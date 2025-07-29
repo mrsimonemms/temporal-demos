@@ -18,6 +18,7 @@ package elk_observability
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"go.temporal.io/sdk/activity"
@@ -34,7 +35,7 @@ func Workflow(ctx workflow.Context, name string) (string, error) {
 	logger.Info("HelloWorld workflow started", "name", name)
 
 	var result string
-	err := workflow.ExecuteActivity(ctx, Activity, name).Get(ctx, &result)
+	err := workflow.ExecuteActivity(ctx, Hello, name).Get(ctx, &result)
 	if err != nil {
 		logger.Error("Activity failed.", "Error", err)
 		return "", err
@@ -45,8 +46,24 @@ func Workflow(ctx workflow.Context, name string) (string, error) {
 	return result, nil
 }
 
-func Activity(ctx context.Context, name string) (string, error) {
+func Hello(ctx context.Context, name string) (string, error) {
 	logger := activity.GetLogger(ctx)
+	metricsHandler := activity.GetMetricsHandler(ctx)
+	metricsHandler = recordHelloStart(metricsHandler, "metrics.Hello")
+	var err error
+	defer func() {
+		recordHelloEnd(metricsHandler, err)
+	}()
+
 	logger.Info("Activity", "name", name)
-	return "Hello " + name + "!", nil
+
+	time.Sleep(time.Second * 5)
+
+	resp := "Hello " + name + "!"
+	if name == "error" {
+		err = fmt.Errorf("invalid name: %s", name)
+		resp = ""
+	}
+
+	return resp, err
 }

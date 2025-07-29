@@ -17,6 +17,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -25,53 +26,34 @@ import (
 	prom "github.com/prometheus/client_golang/prometheus"
 	"github.com/uber-go/tally/v4"
 	"github.com/uber-go/tally/v4/prometheus"
+	"go.temporal.io/sdk/client"
+	"go.temporal.io/sdk/contrib/opentelemetry"
 	sdktally "go.temporal.io/sdk/contrib/tally"
+	sdkinterceptor "go.temporal.io/sdk/interceptor"
 	"go.temporal.io/sdk/worker"
 )
 
-func newPrometheusScope(c prometheus.Configuration) tally.Scope {
-	reporter, err := c.NewReporter(
-		prometheus.ConfigurationOptions{
-			Registry: prom.NewRegistry(),
-			OnError: func(err error) {
-				log.Println("error in prometheus reporter", err)
-			},
-		},
-	)
-	if err != nil {
-		log.Fatalln("error creating prometheus reporter", err)
-	}
-	scopeOpts := tally.ScopeOptions{
-		CachedReporter:  reporter,
-		Separator:       prometheus.DefaultSeparator,
-		SanitizeOptions: &sdktally.PrometheusSanitizeOptions,
-		Prefix:          "temporal_samples",
-	}
-	scope, _ := tally.NewRootScope(scopeOpts, time.Second)
-	scope = sdktally.NewPrometheusNamingScope(scope)
-
-	log.Println("prometheus metrics scope created")
-	return scope
-}
-
 func main() {
-	// create Interceptor
-	// log.Println("Create OpenTelemetry interceptor")
-	// tracingInterceptor, err := opentelemetry.NewTracingInterceptor(opentelemetry.TracerOptions{})
-	// if err != nil {
-	// 	log.Fatalln("Unable to create OpenTelemetry interceptor")
-	// }
+	tracingInterceptor, err := opentelemetry.NewTracingInterceptor(opentelemetry.TracerOptions{})
+	if err != nil {
+		log.Fatalln("Unable to create opentelemetry interceptor", err)
+	}
 
-	// The client and worker are heavyweight objects that should be created once per process.
-	// c, err := client.Dial(client.Options{
-	// 	HostPort:     os.Getenv("TEMPORAL_ADDRESS"),
-	// 	Interceptors: []sdkinterceptor.ClientInterceptor{tracingInterceptor},
-	// 	MetricsHandler: sdktally.NewMetricsHandler(newPrometheusScope(prometheus.Configuration{
-	// 		ListenAddress: "0.0.0.0:9090",
-	// 		TimerType:     "histogram",
-	// 	})),
-	// })
-	c, err := temporal.NewClient()
+	promScope, err := newPrometheusScope(prometheus.Configuration{
+		ListenAddress: "0.0.0.0:9090",
+		TimerType:     "histogram",
+	})
+	if err != nil {
+		log.Fatalln("Error creating prometheus metrics scope", err)
+	}
+	fmt.Println(promScope, tracingInterceptor)
+
+	c, err := temporal.NewClient(client.Options{
+		Interceptors: []sdkinterceptor.ClientInterceptor{
+			tracingInterceptor,
+		},
+		MetricsHandler: sdktally.NewMetricsHandler(promScope),
+	})
 	if err != nil {
 		log.Fatalln("Unable to create client", err)
 	}
@@ -84,10 +66,34 @@ func main() {
 	w := worker.New(c, "elk-observability", worker.Options{})
 
 	w.RegisterWorkflow(elk_observability.Workflow)
-	w.RegisterActivity(elk_observability.Activity)
+	w.RegisterActivity(elk_observability.Hello)
 
 	err = w.Run(worker.InterruptCh())
 	if err != nil {
 		log.Fatalln("Unable to start worker", err)
 	}
+}
+
+func newPrometheusScope(c prometheus.Configuration) (tally.Scope, error) {
+	reporter, err := c.NewReporter(
+		prometheus.ConfigurationOptions{
+			Registry: prom.NewRegistry(),
+			OnError: func(err error) {
+				log.Println("error in prometheus reporter", err)
+			},
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error creating prometheus reporter: %w", err)
+	}
+
+	scopeOpts := tally.ScopeOptions{
+		CachedReporter:  reporter,
+		Separator:       prometheus.DefaultSeparator,
+		SanitizeOptions: &sdktally.PrometheusSanitizeOptions,
+	}
+	scope, _ := tally.NewRootScope(scopeOpts, time.Second)
+	scope = sdktally.NewPrometheusNamingScope(scope)
+
+	return scope, nil
 }

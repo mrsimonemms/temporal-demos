@@ -23,11 +23,9 @@ import (
 	"strings"
 
 	"go.temporal.io/sdk/client"
-	"go.temporal.io/sdk/contrib/opentelemetry"
-	sdkinterceptor "go.temporal.io/sdk/interceptor"
 )
 
-func NewClient() (client.Client, error) {
+func NewClient(opts ...client.Options) (client.Client, error) {
 	hostPort := os.Getenv("TEMPORAL_ADDRESS")
 	if hostPort == "" {
 		hostPort = client.DefaultHostPort
@@ -45,18 +43,20 @@ func NewClient() (client.Client, error) {
 		creds = client.NewAPIKeyStaticCredentials(key)
 	}
 
-	tracingInterceptor, err := opentelemetry.NewTracingInterceptor(opentelemetry.TracerOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("unable to create opentelemetry interceptor: %w", err)
-	}
-
-	c, err := client.Dial(client.Options{
+	clientOpts := client.Options{
 		HostPort:          hostPort,
 		Namespace:         namespace,
 		ConnectionOptions: connectionOpts,
 		Credentials:       creds,
-		Interceptors:      []sdkinterceptor.ClientInterceptor{tracingInterceptor},
-	})
+	}
+
+	if len(opts) > 0 {
+		o := opts[0]
+		clientOpts.Interceptors = o.Interceptors
+		clientOpts.MetricsHandler = o.MetricsHandler
+	}
+
+	c, err := client.Dial(clientOpts)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create client: %w", err)
 	}
