@@ -7,6 +7,11 @@
 # include:
 #   - ../temporal-compose.yaml
 #
+# This is also published to an OCI image and can be loaded:
+#
+# include:
+#   - oci://ghcr.io/mrsimonemms/temporal-demos/temporal-compose
+#
 # This Temporal instance runs on ports 7234 (server) and 8080 (UI)
 
 services:
@@ -53,10 +58,19 @@ services:
         condition: service_healthy
       pgsql:
         condition: service_started
+      temporal-init:
+        condition: service_completed_successfully
     volumes:
-      - ./dev/temporal:/etc/temporal/config/dynamicconfig
+      - temporal:/etc/temporal/config/dynamicconfig
     ports:
       - 7234:7233
+
+  temporal-init:
+    image: alpine
+    volumes:
+      - temporal:/temporal
+    command: >
+      sh -c "echo bGltaXQubWF4SURMZW5ndGg6CiAgLSB2YWx1ZTogMjU1CiAgICBjb25zdHJhaW50czoge30Kc3lzdGVtLmZvcmNlU2VhcmNoQXR0cmlidXRlc0NhY2hlUmVmcmVzaE9uUmVhZDoKICAtIHZhbHVlOiB0cnVlICMgRGV2IHNldHVwIG9ubHkuIFBsZWFzZSBkb24ndCB0dXJuIHRoaXMgb24gaW4gcHJvZHVjdGlvbi4KICAgIGNvbnN0cmFpbnRzOiB7fQo= | base64 -d > /temporal/development-sql.yaml"
 
   temporal-ui:
     image: temporalio/ui:${TEMPORAL_UI_VERSION:-latest}
@@ -66,3 +80,6 @@ services:
       - temporal
     ports:
       - 8080:8080
+
+volumes:
+  temporal:
