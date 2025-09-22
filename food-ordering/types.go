@@ -104,8 +104,9 @@ type OrderProduct struct {
 }
 
 type Product struct {
-	ProductID int `json:"productId"`
-	Name string `json:"name"`
+	ProductID int     `json:"productId"`
+	Name      string  `json:"name"`
+	Price     float64 `json:"price"`
 }
 
 func NewOrderState() OrderState {
