@@ -33,10 +33,6 @@
     <h1 class="title">Welcome to The Grub Stop</h1>
     <h2 class="subtitle">Buy yourself some delicious grub</h2>
 
-    <div class="columns">
-      <div class="column is-half">
-        {@render children()}
-      </div>
-    </div>
+    {@render children()}
   </div>
 </section>

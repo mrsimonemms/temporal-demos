@@ -24,7 +24,6 @@ import (
 	"go.temporal.io/sdk/workflow"
 )
 
-// @todo(sje): automatically cancel inactive workflows
 func OrderWorkflow(ctx workflow.Context, state OrderState) error {
 	logger := workflow.GetLogger(ctx)
 
@@ -36,8 +35,6 @@ func OrderWorkflow(ctx workflow.Context, state OrderState) error {
 		logger.Error("SetQueryHandler failed.", "error", err, "query", Queries.GET_STATUS)
 		return err
 	}
-
-	var a *activities
 
 	// Add a new item into the basket
 	if err := workflow.SetUpdateHandlerWithOptions(
@@ -113,21 +110,15 @@ func OrderWorkflow(ctx workflow.Context, state OrderState) error {
 		return err
 	}
 
-	// Wait for the checkout signal
-	_ = workflow.GetSignalChannel(ctx, Signals.CHECKOUT).Receive(ctx, nil)
-
-	logger.Info("Checkout triggered")
-
-	// Change state to pending
-	state.Status = OrderStatusPending
-
-	ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
-		StartToCloseTimeout: time.Minute,
-	})
-
-	if err := workflow.ExecuteActivity(ctx, a.DoSomething).Get(ctx, nil); err != nil {
-		logger.Error("Error checking out", "error", err)
-		return fmt.Errorf("error checking out: %w", err)
+	// Wait for the status to be completed
+	if ok, err := workflow.AwaitWithTimeout(ctx, time.Hour, func() bool {
+		return state.Status == OrderStatusCompleted
+	}); err != nil {
+		logger.Error("Error waiting for workflow to complete", "error", err)
+		return fmt.Errorf("error waiting for workflow to complete: %w", err)
+	} else if !ok {
+		logger.Error("Await timedout")
+		return fmt.Errorf("await timedout")
 	}
 
 	return nil
