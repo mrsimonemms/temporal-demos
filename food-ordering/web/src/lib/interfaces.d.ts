@@ -33,6 +33,7 @@ type OrderStatus =
   | 'ACCEPTED' // Restaurant accepted order, but not started work yet
   | 'PREPARING' // Restaurant is cooking your food
   | 'READY' // Food is ready for collection/out for delivery
+  | 'REJECTED' // Kitchen has rejected the order
   | 'COMPLETED'; // Food given to a hungry person
 
 interface IOrderState {

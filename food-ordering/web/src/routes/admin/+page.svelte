@@ -42,6 +42,10 @@
           name: 'Accept',
           status: 'ACCEPTED',
         };
+        previous = {
+          name: 'Reject',
+          status: 'REJECTED'
+        }
         break;
       case 'ACCEPTED':
         next = {
