@@ -88,15 +88,27 @@ func OrderWorkflow(ctx workflow.Context, state OrderState) error {
 		return err
 	}
 
+	updateInProgress := false
 	// Update the order status - this will come from the restaurant
 	if err := workflow.SetUpdateHandlerWithOptions(
 		ctx,
 		Updates.UPDATE_STATUS,
 		func(ctx workflow.Context, input string) error {
+			updateInProgress = true
 			status, _ := ParseOrderStatus(input)
 
 			logger.Info("Updating order status", "status", status)
 			state.Status = status
+
+			ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+				StartToCloseTimeout: time.Minute,
+			})
+
+			if err := workflow.ExecuteActivity(ctx, a.SendNotification, state.Status).Get(ctx, nil); err != nil {
+				logger.Error("Error notifying of status change", "error", err)
+				return fmt.Errorf("error notifying of status change: %w", err)
+			}
+			updateInProgress = false
 
 			return nil
 		},
@@ -127,9 +139,14 @@ func OrderWorkflow(ctx workflow.Context, state OrderState) error {
 	// Set order status to pending
 	state.Status = OrderStatusPending
 
+	if err := workflow.ExecuteActivity(ctx, a.SendNotification, state.Status).Get(ctx, nil); err != nil {
+		logger.Error("Error notifying of status change", "error", err)
+		return fmt.Errorf("error notifying of status change: %w", err)
+	}
+
 	// Wait for the status to be completed
 	if ok, err := workflow.AwaitWithTimeout(ctx, time.Hour, func() bool {
-		return state.Status == OrderStatusCompleted
+		return state.Status == OrderStatusCompleted && !updateInProgress
 	}); err != nil {
 		logger.Error("Error waiting for workflow to complete", "error", err)
 		return fmt.Errorf("error waiting for workflow to complete: %w", err)
