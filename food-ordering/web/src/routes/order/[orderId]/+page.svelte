@@ -64,6 +64,10 @@
 {#if order}
   {#if order.status === 'COMPLETED'}
     <p class="is-size-2">Enjoy your grub</p>
+  {:else if order.status === 'REJECTED'}
+    <p class="is-size-2">
+      Sorry, we can't do your order - your money has been refunded
+    </p>
   {:else}
     <p class="mb-2 is-size-2">
       Order:

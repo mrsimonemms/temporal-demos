@@ -25,6 +25,17 @@ import (
 
 type activities struct{}
 
+func (a *activities) RefundPayment(ctx context.Context) error {
+	logger := activity.GetLogger(ctx)
+	logger.Info("Activity started")
+
+	time.Sleep(time.Second * 5)
+
+	logger.Info("Activity finished")
+
+	return nil
+}
+
 func (a *activities) SendNotification(ctx context.Context, status OrderStatus) error {
 	logger := activity.GetLogger(ctx)
 	logger.Info("Activity started")

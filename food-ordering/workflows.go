@@ -30,6 +30,9 @@ func OrderWorkflow(ctx workflow.Context, state OrderState) error {
 	// Force to be default state - payment not taken yet
 	state.Status = OrderStatusDefault
 
+	var cancel workflow.CancelFunc
+	ctx, cancel = workflow.WithCancel(ctx)
+
 	var a *activities
 
 	// Query to return status of basket
@@ -103,6 +106,19 @@ func OrderWorkflow(ctx workflow.Context, state OrderState) error {
 			ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
 				StartToCloseTimeout: time.Minute,
 			})
+
+			if state.Status == OrderStatusRejected {
+				logger.Info("Order cancelled")
+				defer func() {
+					fmt.Println("Cancelling")
+					cancel()
+				}()
+
+				if err := workflow.ExecuteActivity(ctx, a.RefundPayment).Get(ctx, nil); err != nil {
+					logger.Error("Error refunding payment", "error", err)
+					return fmt.Errorf("error refunding payment: %w", err)
+				}
+			}
 
 			if err := workflow.ExecuteActivity(ctx, a.SendNotification, state.Status).Get(ctx, nil); err != nil {
 				logger.Error("Error notifying of status change", "error", err)

@@ -30,6 +30,7 @@ const (
 	OrderStatusPreparing OrderStatus = "PREPARING" // Restaurant is cooking your food
 	OrderStatusReady     OrderStatus = "READY"     // Food is ready for collection/out for delivery
 	OrderStatusCompleted OrderStatus = "COMPLETED" // Food given to a hungry person
+	OrderStatusRejected  OrderStatus = "REJECTED"  // Kitchen has rejected the order
 )
 
 func ParseOrderStatus(status string) (OrderStatus, error) {
@@ -44,6 +45,8 @@ func ParseOrderStatus(status string) (OrderStatus, error) {
 		return OrderStatusPreparing, nil
 	case "READY":
 		return OrderStatusReady, nil
+	case "REJECTED":
+		return OrderStatusRejected, nil
 	case "COMPLETED":
 		return OrderStatusCompleted, nil
 	}
