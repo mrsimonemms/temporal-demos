@@ -27,6 +27,11 @@ import (
 func OrderWorkflow(ctx workflow.Context, state OrderState) error {
 	logger := workflow.GetLogger(ctx)
 
+	// Force to be default state - payment not taken yet
+	state.Status = OrderStatusDefault
+
+	var a *activities
+
 	// Query to return status of basket
 	if err := workflow.SetQueryHandler(ctx, Queries.GET_STATUS, func(_ []byte) (OrderState, error) {
 		logger.Debug("Returning order status")
@@ -109,6 +114,18 @@ func OrderWorkflow(ctx workflow.Context, state OrderState) error {
 		logger.Error("SetUpdateHandlerWithOptions failed.", "Error", err, "update", Updates.UPDATE_STATUS)
 		return err
 	}
+
+	ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+		StartToCloseTimeout: time.Minute,
+	})
+
+	if err := workflow.ExecuteActivity(ctx, a.TakePayment).Get(ctx, nil); err != nil {
+		logger.Error("Error taking payment", "error", err)
+		return fmt.Errorf("error taking payment: %w", err)
+	}
+
+	// Set order status to pending
+	state.Status = OrderStatusPending
 
 	// Wait for the status to be completed
 	if ok, err := workflow.AwaitWithTimeout(ctx, time.Hour, func() bool {

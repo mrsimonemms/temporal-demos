@@ -25,7 +25,7 @@ import (
 
 type activities struct{}
 
-func (a *activities) DoSomething(ctx context.Context) error {
+func (a *activities) TakePayment(ctx context.Context) error {
 	logger := activity.GetLogger(ctx)
 	logger.Info("Activity started")
 

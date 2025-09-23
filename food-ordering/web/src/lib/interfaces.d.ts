@@ -28,7 +28,7 @@ interface IProduct2 {
 }
 
 type OrderStatus =
-  | 'DEFAULT' // Order not submitted yet
+  | 'DEFAULT' // Order not paid yet
   | 'PENDING' // Order paid and waiting for restaurant to accept
   | 'ACCEPTED' // Restaurant accepted order, but not started work yet
   | 'PREPARING' // Restaurant is cooking your food

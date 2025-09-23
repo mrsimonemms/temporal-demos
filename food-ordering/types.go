@@ -24,7 +24,7 @@ import (
 type OrderStatus string
 
 const (
-	OrderStatusDefault   OrderStatus = "DEFAULT"   // Order not submitted yet
+	OrderStatusDefault   OrderStatus = "DEFAULT"   // Order not paid yet
 	OrderStatusPending   OrderStatus = "PENDING"   // Order paid and waiting for restaurant to accept
 	OrderStatusAccepted  OrderStatus = "ACCEPTED"  // Restaurant accepted order, but not started work yet
 	OrderStatusPreparing OrderStatus = "PREPARING" // Restaurant is cooking your food

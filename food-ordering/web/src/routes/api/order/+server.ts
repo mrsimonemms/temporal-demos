@@ -80,15 +80,10 @@ export const POST: RequestHandler = async ({ request }) => {
   const data = await request.json();
   const workflowId = `order-${nanoid()}`;
 
-  const handler = await temporal.workflow.start('OrderWorkflow', {
+  await temporal.workflow.start('OrderWorkflow', {
     taskQueue: 'order-food',
     args: [data],
     workflowId,
-  });
-
-  // Update status
-  await handler.executeUpdate('UPDATE_STATUS', {
-    args: ['PENDING'],
   });
 
   return json({
