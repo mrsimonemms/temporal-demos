@@ -18,7 +18,6 @@ package foodordering
 
 import (
 	"fmt"
-	"slices"
 	"time"
 
 	"go.temporal.io/sdk/workflow"
@@ -44,53 +43,6 @@ func OrderWorkflow(ctx workflow.Context, state OrderState) error {
 		return err
 	}
 
-	// Add a new item into the basket
-	if err := workflow.SetUpdateHandlerWithOptions(
-		ctx,
-		Updates.ADD_ITEM,
-		func(ctx workflow.Context, item OrderProduct) error {
-			logger.Info("Adding new item to basket", "productId", item.ProductID, "quantity", item.Quantity)
-			state.AddItem(item)
-
-			return nil
-		},
-		workflow.UpdateHandlerOptions{
-			Validator: func(ctx workflow.Context, item OrderProduct) error {
-				key := slices.IndexFunc(allProducts, func(i Product) bool {
-					return i.ProductID == item.ProductID
-				})
-
-				if key == -1 {
-					return fmt.Errorf("unknown product id")
-				}
-
-				if item.Quantity <= 0 {
-					return fmt.Errorf("quantity must be minimum of 1")
-				}
-
-				return nil
-			},
-		},
-	); err != nil {
-		logger.Error("SetUpdateHandlerWithOptions failed.", "Error", err, "update", Updates.ADD_ITEM)
-		return err
-	}
-
-	// Remove an item from the basket
-	if err := workflow.SetUpdateHandler(
-		ctx,
-		Updates.REMOVE_ITEM,
-		func(ctx workflow.Context, item OrderProduct) error {
-			logger.Info("Removing item from the basket", "productId", item.ProductID, "quantity", item.Quantity)
-			state.RemoveItem(item)
-
-			return nil
-		},
-	); err != nil {
-		logger.Error("SetUpdateHandlerWithOptions failed.", "Error", err, "update", Updates.REMOVE_ITEM)
-		return err
-	}
-
 	updateInProgress := false
 	// Update the order status - this will come from the restaurant
 	if err := workflow.SetUpdateHandlerWithOptions(
@@ -110,7 +62,6 @@ func OrderWorkflow(ctx workflow.Context, state OrderState) error {
 			if state.Status == OrderStatusRejected {
 				logger.Info("Order cancelled")
 				defer func() {
-					fmt.Println("Cancelling")
 					cancel()
 				}()
 
@@ -120,7 +71,7 @@ func OrderWorkflow(ctx workflow.Context, state OrderState) error {
 				}
 			}
 
-			if err := workflow.ExecuteActivity(ctx, a.SendNotification, state.Status).Get(ctx, nil); err != nil {
+			if err := workflow.ExecuteActivity(ctx, a.SendTextMessage, state).Get(ctx, nil); err != nil {
 				logger.Error("Error notifying of status change", "error", err)
 				return fmt.Errorf("error notifying of status change: %w", err)
 			}
@@ -155,20 +106,17 @@ func OrderWorkflow(ctx workflow.Context, state OrderState) error {
 	// Set order status to pending
 	state.Status = OrderStatusPending
 
-	if err := workflow.ExecuteActivity(ctx, a.SendNotification, state.Status).Get(ctx, nil); err != nil {
+	if err := workflow.ExecuteActivity(ctx, a.SendTextMessage, state).Get(ctx, nil); err != nil {
 		logger.Error("Error notifying of status change", "error", err)
 		return fmt.Errorf("error notifying of status change: %w", err)
 	}
 
 	// Wait for the status to be completed
-	if ok, err := workflow.AwaitWithTimeout(ctx, time.Hour, func() bool {
+	if err := workflow.Await(ctx, func() bool {
 		return state.Status == OrderStatusCompleted && !updateInProgress
 	}); err != nil {
 		logger.Error("Error waiting for workflow to complete", "error", err)
 		return fmt.Errorf("error waiting for workflow to complete: %w", err)
-	} else if !ok {
-		logger.Error("Await timedout")
-		return fmt.Errorf("await timedout")
 	}
 
 	return nil

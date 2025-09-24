@@ -36,7 +36,7 @@ func (a *activities) RefundPayment(ctx context.Context) error {
 	return nil
 }
 
-func (a *activities) SendNotification(ctx context.Context, status OrderStatus) error {
+func (a *activities) SendTextMessage(ctx context.Context, status OrderState) error {
 	logger := activity.GetLogger(ctx)
 	logger.Info("Activity started")
 
