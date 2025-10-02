@@ -19,7 +19,9 @@ package main
 import (
 	"log"
 
-	"github.com/mrsimonemms/temporal-demos/nexus/handler"
+	"github.com/mrsimonemms/temporal-demos/nexus/greeter"
+	"github.com/mrsimonemms/temporal-demos/nexus/shared"
+	"github.com/nexus-rpc/sdk-go/nexus"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/contrib/envconfig"
 	"go.temporal.io/sdk/worker"
@@ -34,13 +36,20 @@ func main() {
 	defer c.Close()
 
 	// Create the workflow with the task queue "hackathon"
-	w := worker.New(c, handler.TASK_QUEUE_NAME, worker.Options{})
+	w := worker.New(c, greeter.TASK_QUEUE_NAME, worker.Options{})
+
+	// Register Nexus services
+	svc := nexus.NewService(shared.ServiceName)
+	if err := svc.Register(greeter.HelloWorldOperation); err != nil {
+		log.Fatalln("Unable to register Nexus handler", err)
+	}
+	w.RegisterNexusService(svc)
 
 	// Register the workflows
-	w.RegisterWorkflow(handler.HelloWorldWorkflow)
+	w.RegisterWorkflow(greeter.HelloWorldWorkflow)
 
 	// Register the activities - you may need to inject dependencies in here
-	activities, err := handler.NewActivities()
+	activities, err := greeter.NewActivities()
 	if err != nil {
 		log.Fatalln("Error creating activities", err)
 	}

@@ -14,11 +14,16 @@
  * limitations under the License.
  */
 
-package handler
+package greeter
 
 import (
+	"context"
 	"time"
 
+	"github.com/mrsimonemms/temporal-demos/nexus/shared"
+	"github.com/nexus-rpc/sdk-go/nexus"
+	"go.temporal.io/sdk/client"
+	"go.temporal.io/sdk/temporalnexus"
 	"go.temporal.io/sdk/workflow"
 )
 
@@ -44,3 +49,13 @@ func HelloWorldWorkflow(ctx workflow.Context, name string) (string, error) {
 
 	return result, nil
 }
+
+var HelloWorldOperation = temporalnexus.NewWorkflowRunOperation(shared.HelloOperationName, HelloWorldWorkflow, func(ctx context.Context, input string, options nexus.StartOperationOptions) (client.StartWorkflowOptions, error) {
+	return client.StartWorkflowOptions{
+		// Workflow IDs should typically be business meaningful IDs and are used to dedupe workflow starts.
+		// For this example, we're using the request ID allocated by Temporal when the caller workflow schedules
+		// the operation, this ID is guaranteed to be stable across retries of this operation.
+		ID: options.RequestID,
+		// Task queue defaults to the task queue this operation is handled on.
+	}, nil
+})

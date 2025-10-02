@@ -17,12 +17,12 @@
 package main
 
 import (
+	"context"
 	"log"
 
-	"github.com/mrsimonemms/temporal-demos/nexus/caller"
+	"github.com/mrsimonemms/temporal-demos/nexus/champions"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/contrib/envconfig"
-	"go.temporal.io/sdk/worker"
 )
 
 func main() {
@@ -33,20 +33,25 @@ func main() {
 	}
 	defer c.Close()
 
-	// Create the workflow with the task queue "hackathon"
-	w := worker.New(c, caller.TASK_QUEUE_NAME, worker.Options{})
+	workflowOptions := client.StartWorkflowOptions{
+		TaskQueue: champions.TASK_QUEUE_NAME,
+	}
 
-	// Register the workflows
-	w.RegisterWorkflow(caller.GenerateNameWorkflow)
+	ctx := context.Background()
 
-	// Register the activities - you may need to inject dependencies in here
-	activities, err := caller.NewActivities()
+	// Execute the workflow
+	we, err := c.ExecuteWorkflow(ctx, workflowOptions, champions.SayHelloToChampionWorkflow)
 	if err != nil {
-		log.Fatalln("Error creating activities", err)
+		log.Fatalln("Unable to execute workflow", err)
 	}
-	w.RegisterActivity(activities)
 
-	if err := w.Run(worker.InterruptCh()); err != nil {
-		log.Fatalln("Unable to start worker", err)
+	log.Println("Started workflow", "WorkflowID", we.GetID(), "RunID", we.GetRunID())
+
+	// Synchronously wait for the workflow completion.
+	var result string
+	err = we.Get(ctx, &result)
+	if err != nil {
+		log.Fatalln("Unable get workflow result", err)
 	}
+	log.Println("Workflow result:", result)
 }

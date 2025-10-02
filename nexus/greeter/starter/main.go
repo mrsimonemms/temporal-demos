@@ -20,7 +20,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/mrsimonemms/temporal-demos/nexus/handler"
+	"github.com/mrsimonemms/temporal-demos/nexus/greeter"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/contrib/envconfig"
 )
@@ -34,13 +34,13 @@ func main() {
 	defer c.Close()
 
 	workflowOptions := client.StartWorkflowOptions{
-		TaskQueue: handler.TASK_QUEUE_NAME,
+		TaskQueue: greeter.TASK_QUEUE_NAME,
 	}
 
 	ctx := context.Background()
 
 	// Execute the hello-world workflow with the input "Hacker"
-	we, err := c.ExecuteWorkflow(ctx, workflowOptions, handler.HelloWorldWorkflow, "Hacker")
+	we, err := c.ExecuteWorkflow(ctx, workflowOptions, greeter.HelloWorldWorkflow, "Hacker")
 	if err != nil {
 		log.Fatalln("Unable to execute workflow", err)
 	}

@@ -1,8 +1,12 @@
-module github.com/mrsimonemms/temporal-demos/nexus/handler
+module github.com/mrsimonemms/temporal-demos/nexus/greeter
 
 go 1.24.0
 
+replace github.com/mrsimonemms/temporal-demos/nexus/shared => ../shared
+
 require (
+	github.com/mrsimonemms/temporal-demos/nexus/shared v0.0.0-00010101000000-000000000000
+	github.com/nexus-rpc/sdk-go v0.4.0
 	go.temporal.io/sdk v1.36.0
 	go.temporal.io/sdk/contrib/envconfig v0.1.0
 )
@@ -16,7 +20,6 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.2 // indirect
-	github.com/nexus-rpc/sdk-go v0.4.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/robfig/cron v1.2.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect

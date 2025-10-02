@@ -14,33 +14,9 @@
  * limitations under the License.
  */
 
-package caller
+package shared
 
-import (
-	"time"
-
-	"go.temporal.io/sdk/workflow"
+const (
+	HelloOperationName = "HelloOperation"
+	ServiceName        = "HelloWorldService"
 )
-
-func GenerateNameWorkflow(ctx workflow.Context) (string, error) {
-	ao := workflow.ActivityOptions{
-		StartToCloseTimeout: 10 * time.Second,
-	}
-	ctx = workflow.WithActivityOptions(ctx, ao)
-
-	logger := workflow.GetLogger(ctx)
-	logger.Info("GenerateName workflow started")
-
-	var a *activities
-
-	var name string
-	err := workflow.ExecuteActivity(ctx, a.GenerateName).Get(ctx, &name)
-	if err != nil {
-		logger.Error("Activity failed.", "Error", err)
-		return "", err
-	}
-
-	logger.Info("GenerateName workflow completed.", "name", name)
-
-	return name, nil
-}
