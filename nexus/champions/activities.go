@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package caller
+package champions
 
 import (
 	"context"
 	"math/rand"
+	"time"
 
 	"go.temporal.io/sdk/activity"
 )
@@ -73,10 +74,12 @@ var availableNames = []string{
 	"Lando",
 }
 
-// This is a simple activity that generates a name
-func (a *activities) GenerateName(ctx context.Context) (string, error) {
+// This is a simple activity that finds a world champion
+func (a *activities) FindChampion(ctx context.Context) (string, error) {
 	logger := activity.GetLogger(ctx)
-	logger.Info("Generate a name")
+	logger.Info("Find a champion")
+
+	time.Sleep(time.Second * 5)
 
 	return availableNames[rand.Intn(len(availableNames))], nil
 }

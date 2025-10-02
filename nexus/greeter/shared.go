@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 
-package caller
+package greeter
 
-const TASK_QUEUE_NAME = "nexus-caller"
+const TASK_QUEUE_NAME = "nexus-example"

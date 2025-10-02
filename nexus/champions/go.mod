@@ -1,8 +1,11 @@
-module github.com/mrsimonemms/temporal-demos/nexus/caller
+module github.com/mrsimonemms/temporal-demos/nexus/champions
 
 go 1.24.0
 
+replace github.com/mrsimonemms/temporal-demos/nexus/shared => ../shared
+
 require (
+	github.com/mrsimonemms/temporal-demos/nexus/shared v0.0.0-00010101000000-000000000000
 	go.temporal.io/sdk v1.36.0
 	go.temporal.io/sdk/contrib/envconfig v0.1.0
 )

@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 
-package handler
+package champions
 
-const TASK_QUEUE_NAME = "nexus-example"
+const TASK_QUEUE_NAME = "nexus-caller"
